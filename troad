@@ -1,0 +1,57 @@
+#! /usr/bin/env python
+
+"""
+Fetch the workout image from trainier road.
+
+Usage:
+    troad <activity> [--creds=<c>] [--athlete=<a>] [--email=<e>]
+
+Options:
+    --creds=<c>     Location of credentials file [default: creds.secret]
+    --athlete=<a>   Athlete name [default: creimer]
+    --email=<e>     Email address to send url to [default: ]
+"""
+
+import sys
+import pickle
+from docopt import docopt
+import sendgrid
+from sendgrid.helpers.mail import Email, Content, Mail
+from trainerroad import TrainerRoad
+
+
+__version__ = '0.1.0'
+
+
+def send_link_via_email(creds, email, url):
+    sg = sendgrid.SendGridAPIClient(apikey=creds['email_api_key'])
+    from_email = Email(email)
+    to_email = Email(email)
+    subject = "Link to your TrainerRoad activity image"
+    content = Content("text/plain", url)
+    mail = Mail(from_email, subject, to_email, content)
+    response = sg.client.mail.send.post(request_body=mail.get())
+    return response.status_code
+
+
+def main(activity, athlete, email, creds):
+    with TrainerRoad(athlete) as troad:
+        url = troad.ride_image_url(activity)
+
+    if email:
+        with open(creds, 'rb') as pfile:
+            creds = pickle.load(pfile)
+        return send_link_via_email(creds, email, url)
+    else:
+        print(url)
+        return 0
+
+
+if __name__ == '__main__':
+    args = docopt(__doc__, version='troad %s' % __version__)
+
+    activity = args['<activity>']
+    athlete = args['--athlete']
+    email = args['--email'] or None
+    creds = args['--creds']
+    sys.exit(main(activity, athlete, email, creds))
