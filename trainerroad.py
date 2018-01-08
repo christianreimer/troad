@@ -2,9 +2,14 @@ from selenium import webdriver
 
 
 class TrainerRoad(object):
-    def __init__(self, athlete):
-        self.driver = webdriver.Chrome()
-        self.driver.get(f'https://www.trainerroad.com/career/{athlete}')
+    def __init__(self, athlete, driver=None):
+        if driver == 'firefox':
+            self.driver = webdriver.Firefox()
+        else:
+            self.driver = webdriver.Chrome()
+
+        self.driver.get(
+            'https://www.trainerroad.com/career/{a}'.format(a=athlete))
 
     def __enter__(self):
         return self
